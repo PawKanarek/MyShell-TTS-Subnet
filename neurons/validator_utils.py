@@ -25,6 +25,18 @@ def iswin(score_i, score_j, block_i, block_j):
     score_j = (1 - constants.timestamp_epsilon) * score_j if block_j > block_i else score_j
     return score_i > score_j
 
+def iswin0eps(score_i, score_j):
+    """
+    Determines the winner between two models.
+
+    Parameters:
+        score_i (float): Score of uid i on batch
+        score_j (float): Score of uid j on batch.
+    Returns:
+        bool: True if score i is better, False otherwise.
+    """
+    return score_i > score_j
+
 def compute_wins(
     uids: typing.List[int],
     scores_per_uid: typing.Dict[int, typing.List[float]],
@@ -62,6 +74,46 @@ def compute_wins(
         win_rate[uid_i] = wins[uid_i] / total_matches if total_matches > 0 else 0
 
     return wins, win_rate
+
+
+def compute_wins0eps(
+    uids: typing.List[int],
+    scores_per_uid: typing.Dict[int, typing.List[float]],
+    block: np.ndarray,
+):
+    """
+    Computes the wins and win rate for each model based on score comparison.
+
+    Parameters:
+        uids (list): A list of uids to compare.
+        scores_per_uid (dict): A dictionary of scores for each uid by batch.
+        batches (List): A list of data batches.
+        uid_to_block (dict): A dictionary of blocks for each uid.
+
+    Returns:
+        tuple: A tuple containing two dictionaries, one for wins and one for win rates.
+    """
+    wins = {uid: 0 for uid in uids}
+    win_rate = {uid: 0 for uid in uids}
+    for i, uid_i in enumerate(uids):
+        total_matches = 0
+        block_i = block[uid_i]
+        for j, uid_j in enumerate(uids):
+            if i == j:
+                continue
+            block_j = block[uid_j]
+            batches_i = len(scores_per_uid[uid_i])
+            batches_j = len(scores_per_uid[uid_j])
+            for batch_idx in range(0, min(batches_i, batches_j)):
+                scores_i = scores_per_uid[uid_i][batch_idx]
+                scores_j = scores_per_uid[uid_j][batch_idx]
+                wins[uid_i] += 1 if iswin0eps(scores_i, scores_j) else 0
+                total_matches += 1
+        # Calculate win rate for uid i
+        win_rate[uid_i] = wins[uid_i] / total_matches if total_matches > 0 else 0
+
+    return wins, win_rate
+
 
 def adjust_for_vtrust(weights: np.ndarray, consensus: np.ndarray, vtrust_min: float = 0.5):
     """

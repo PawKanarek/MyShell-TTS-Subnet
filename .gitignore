@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 testing/
+tts_rater/pann/Cnn14_mAP=0.431.pth

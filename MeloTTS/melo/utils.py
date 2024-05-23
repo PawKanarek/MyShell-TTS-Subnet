@@ -12,6 +12,8 @@ import librosa
 from melo.text import cleaned_text_to_sequence, get_bert
 from melo.text.cleaner import clean_text
 from melo import commons
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
 
 MATPLOTLIB_FLAG = False
 
@@ -58,8 +60,16 @@ def get_text_for_tts_infer(text, language_str, hps, device, symbol_to_id=None):
     return bert, ja_bert, phone, tone, language
 
 def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False):
-    assert os.path.isfile(checkpoint_path)
-    checkpoint_dict = torch.load(checkpoint_path, map_location="cpu")
+    if not os.path.isfile(checkpoint_path):
+        checkpoint_path = hf_hub_download(repo_id=checkpoint_path, filename="checkpoint.safetensors")
+        print(checkpoint_path)
+        ckp_model = load_file(checkpoint_path)
+        checkpoint_dict = {"model": ckp_model}
+    else:
+        assert os.path.isfile(checkpoint_path)
+        checkpoint_dict = torch.load(checkpoint_path, map_location="cpu")
+        print(checkpoint_dict.keys())
+        
     iteration = checkpoint_dict.get("iteration", 0)
     learning_rate = checkpoint_dict.get("learning_rate", 0.)
     if (
