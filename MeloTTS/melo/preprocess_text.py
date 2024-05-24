@@ -5,10 +5,10 @@ from typing import Optional
 
 from tqdm import tqdm
 import click
-from text.cleaner import clean_text_bert
+from .text.cleaner import clean_text_bert
 import os
 import torch
-from text.symbols import symbols, num_languages, num_tones
+from .text.symbols import symbols, num_languages, num_tones
 
 @click.command()
 @click.option(

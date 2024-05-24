@@ -81,7 +81,7 @@ def extract_se(ref_enc, waveforms, batch_size, se_save_path=None):
         y = pad_audio_batch(y)
         y = torch.stack(y)
         y = y.cuda()
-
+        print("y.shape", y.shape)
         y = spectrogram_torch(
             y,
             hps.data.filter_length,
@@ -91,7 +91,11 @@ def extract_se(ref_enc, waveforms, batch_size, se_save_path=None):
             center=False,
         )
         with torch.no_grad():
-            g = ref_enc(y.transpose(1, 2))
+            print("before transposing", y.shape)
+            y = y.transpose(1, 2) 
+            print("after transposing", y.shape)
+            g = ref_enc(y)
+            print("after ref_enc", g.shape)
             gs.append(g.detach())
     gs = torch.cat(gs)
 

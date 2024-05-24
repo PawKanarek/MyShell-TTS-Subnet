@@ -260,14 +260,14 @@ def g2p(text, pad_start_end=True, tokenized=None):
     return phones, tones, word2ph
 
 def get_bert_feature(text, word2ph, device=None):
-    from text import english_bert
+    from melo.text import english_bert
 
     return english_bert.get_bert_feature(text, word2ph, device=device)
 
 if __name__ == "__main__":
     # print(get_dict())
     # print(eng_word_to_phoneme("hello"))
-    from text.english_bert import get_bert_feature
+    from melo.text.english_bert import get_bert_feature
     text = "In this paper, we propose 1 DSPGAN, a N-F-T GAN-based universal vocoder."
     text = text_normalize(text)
     phones, tones, word2ph = g2p(text)

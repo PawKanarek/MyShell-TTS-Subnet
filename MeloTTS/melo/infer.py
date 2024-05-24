@@ -1,7 +1,7 @@
 import os
 import click
 from melo.api import TTS
-
+from huggingface_hub import hf_hub_download
 
 
 @click.command()
@@ -13,6 +13,10 @@ from melo.api import TTS
 def main(ckpt_path, text, language, output_dir, config_path):
     if ckpt_path is None:
         raise ValueError("The model_path must be specified")
+    
+    if not os.path.isfile(ckpt_path):
+        ckpt_path = hf_hub_download(repo_id=ckpt_path, filename="checkpoint.safetensors")
+        print(ckpt_path)
 
     print(config_path)
     if config_path is None:
