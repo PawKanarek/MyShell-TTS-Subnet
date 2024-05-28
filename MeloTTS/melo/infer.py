@@ -22,7 +22,7 @@ def main(ckpt_path, text, language, output_dir, config_path):
     if config_path is None:
         config_path = os.path.join(os.path.dirname(ckpt_path), 'config.json')
 
-    model = TTS(language=language, ckpt_path=ckpt_path)
+    model = TTS(language=language, ckpt_path=ckpt_path, config_path=config_path)
 
     for spk_name, spk_id in model.hps.data.spk2id.items():
         save_path = f'{output_dir}/{spk_name}/output.wav'

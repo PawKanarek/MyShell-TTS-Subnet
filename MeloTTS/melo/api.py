@@ -42,6 +42,15 @@ class TTS(nn.Module):
         args = dict(hps.model)
         args.pop("num_languages", None)
 
+        if ("use_noise_scaled_mas" in hps.model.keys() and hps.model.use_noise_scaled_mas is True):
+            print("Using noise scaled MAS for VITS2")
+            mas_noise_scale_initial = 0.01
+            noise_scale_delta = 2e-6
+        else:
+            print("Using normal MAS for VITS1")
+            mas_noise_scale_initial = 0.0
+            noise_scale_delta = 0.0
+
         model = SynthesizerTrn(
             len(symbols),
             hps.data.filter_length // 2 + 1,
@@ -49,6 +58,7 @@ class TTS(nn.Module):
             n_speakers=hps.data.n_speakers,
             num_tones=num_tones,
             num_languages=num_languages,
+            noise_scale_delta=noise_scale_delta,
             **args,
         ).to(device)
 
