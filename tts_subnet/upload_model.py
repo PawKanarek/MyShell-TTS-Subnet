@@ -142,8 +142,8 @@ async def main(config: bt.config):
             break
         except Exception as e:
             bt.logging.error(f"Failed to advertise model on the chain: {e}")
-            bt.logging.error("Retrying in 120 seconds...")
-            time.sleep(120)
+            bt.logging.error("Retrying in 10 seconds...")
+            time.sleep(10)
 
 
 if __name__ == "__main__":

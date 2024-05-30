@@ -1,5 +1,5 @@
-from . import chinese, japanese, english, chinese_mix, korean, french, spanish
-from . import cleaned_text_to_sequence
+from melo.text import chinese, japanese, english, chinese_mix, korean, french, spanish
+from melo.text import cleaned_text_to_sequence
 import copy
 
 language_module_map = {"ZH": chinese, "JP": japanese, "EN": english, 'ZH_MIX_EN': chinese_mix, 'KR': korean,

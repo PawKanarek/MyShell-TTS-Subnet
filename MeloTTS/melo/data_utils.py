@@ -4,11 +4,11 @@ import torch
 import torch.utils.data
 from tqdm import tqdm
 from loguru import logger
-import commons
-from .mel_processing import spectrogram_torch, mel_spectrogram_torch
-from .utils import load_filepaths_and_text
-from .utils import load_wav_to_torch_librosa as load_wav_to_torch
-from .text import cleaned_text_to_sequence, get_bert
+import melo.commons
+from melo.mel_processing import spectrogram_torch, mel_spectrogram_torch
+from melo.utils import load_filepaths_and_text
+from melo.utils import load_wav_to_torch_librosa as load_wav_to_torch
+from melo.text import cleaned_text_to_sequence, get_bert
 import numpy as np
 
 """Multi speaker version"""
@@ -150,9 +150,9 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
     def get_text(self, text, word2ph, phone, tone, language_str, wav_path):
         phone, tone, language = cleaned_text_to_sequence(phone, tone, language_str)
         if self.add_blank:
-            phone = commons.intersperse(phone, 0)
-            tone = commons.intersperse(tone, 0)
-            language = commons.intersperse(language, 0)
+            phone = melo.commons.intersperse(phone, 0)
+            tone = melo.commons.intersperse(tone, 0)
+            language = melo.commons.intersperse(language, 0)
             for i in range(len(word2ph)):
                 word2ph[i] = word2ph[i] * 2
             word2ph[0] += 1

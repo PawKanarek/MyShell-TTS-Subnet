@@ -78,7 +78,10 @@ def compute_wins(
                         blacklist_uids.append(uid_i)
                         break
     whitelist_uids = [uid for uid in uids if uid not in blacklist_uids]
-
+    
+    print(f"blacklisted_uids: {blacklist_uids}")
+    print(f"whitelist_uids: {whitelist_uids}")
+    
     wins = {uid: 0 for uid in uids}
     win_rate = {uid: 0 for uid in uids}
     for i, uid_i in enumerate(whitelist_uids):

@@ -351,6 +351,7 @@ def rate_(
     norm_dict = get_normalized_scores(raw_errs)
 
     keys = list(norm_dict.keys())
+    
     norm_scores = []
     for ii in range(samples):
         norm_score = np.prod([norm_dict[k][ii] for k in keys])
