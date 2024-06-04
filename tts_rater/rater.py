@@ -119,7 +119,7 @@ ref_enc.load_state_dict(checkpoint["model"], strict=True)
 vec_gt_dict = torch.load(os.path.join(script_dir, "vec_gt.pth"), map_location="cuda")
 
 
-def compute_tone_color_loss(audio_paths, vec_gt, batch_size):
+def compute_tone_color_loss(audio_paths, vec_gt, batch_size, audio_pytorch_list=None):
     waveforms = [load_wav_file(fname, hps.data.sampling_rate) for fname in audio_paths]
     vec_gen = extract_se(ref_enc, waveforms, batch_size)
     sims = cosine_similarity(vec_gen, vec_gt)
@@ -136,7 +136,7 @@ whisper_model = WhisperForConditionalGeneration.from_pretrained(whisper_model).c
 whisper_normalizer = EnglishTextNormalizer()
 
 
-def compute_wer(texts, audio_paths, batch_size):
+def compute_wer(texts, audio_paths, batch_size, audio_pytorch_list=None):
     waveforms = [load_wav_file(fname, 16000) for fname in audio_paths]
 
     total_errs = []
@@ -209,6 +209,7 @@ def load_melspecs(fname):
     return mel_spec
 
 
+
 def compute_dns_mos_loss(audio_paths, batch_size):
     mel_specs = [np.array(load_melspecs(f).T).astype("float32") for f in audio_paths]
     dns_mos_results = []
@@ -244,12 +245,16 @@ def compute_mmd(a_x: torch.Tensor, b_y: torch.Tensor):
 
     return _SCALE * (k_xx + k_yy - 2 * k_xy)
 
+def load_wav_file(fname, new_sample_rate):
+    audio_ref, sr = librosa.load(fname, sr=new_sample_rate)
+    y = torch.FloatTensor(audio_ref)
+    return y
 
-def compute_pann_mmd_loss(audio_paths: list[str], speaker: str = "p374"):
+def compute_pann_mmd_loss(audio_paths: list[str], speaker: str = "p374", audio_pytorch_list=None):
     # tit=Tit()
     n_samples = len(audio_paths)
     waveforms = [load_wav_file(fname, 32000) for fname in audio_paths]
-
+    
     embeddings = []
     for audio in tqdm(waveforms):
         audio = torch.Tensor(audio).cuda()
@@ -320,6 +325,7 @@ def rate_(
     samples=64,
     batch_size=16,
     use_tmpdir=False,
+    use_pytorch=False,
 ):
     """
     Compute the following metrics for a given checkpoint:
@@ -342,20 +348,29 @@ def rate_(
         if use_tmpdir:
             tmpdir = "tmp"
             os.makedirs(tmpdir, exist_ok=True)
-        for i, text in enumerate(tqdm(text_test)):
-            save_path = os.path.join(tmpdir, f"{i:03d}.wav")
-            model.tts_to_file(text, spkr, save_path, speed=1.0, quiet=True)
+        
+        audio_pytorch_list = None
+        if use_pytorch: 
+            audio_pytorch_list = []
+            for i, text in enumerate(tqdm(text_test)):
+                save_path = os.path.join(tmpdir, f"{i:03d}.wav")
+                audio = model.tts_to_pytorch(text, spkr, save_path, speed=1.0, quiet=True)
+                audio_pytorch_list.append(audio)
+        else:
+            for i, text in enumerate(tqdm(text_test)):
+                save_path = os.path.join(tmpdir, f"{i:03d}.wav")
+                model.tts_to_file(text, spkr, save_path, speed=1.0, quiet=True)
 
         audio_paths = sorted(glob.glob(os.path.join(tmpdir, "*.wav")))
 
-        pann_mmds = compute_pann_mmd_loss(audio_paths, speaker)
-        total_errs, total_words = compute_wer(text_test, audio_paths, batch_size)
+        pann_mmds = compute_pann_mmd_loss(audio_paths, speaker, audio_pytorch_list)
+        total_errs, total_words = compute_wer(text_test, audio_paths, batch_size, audio_pytorch_list)
         word_error_rates = []
         for idxs in range(samples):
             word_error_rates.append(total_errs[idxs].sum() / total_words[idxs].sum())
 
         vec_gt = vec_gt_dict[speaker]
-        tcs = compute_tone_color_loss(audio_paths, vec_gt, batch_size)
+        tcs = compute_tone_color_loss(audio_paths, vec_gt, batch_size, audio_pytorch_list)
 
     assert len(pann_mmds) == len(word_error_rates) == len(tcs) == samples
     raw_errs = {"pann_mmd": pann_mmds, "word_error_rate": word_error_rates, "tone_color": tcs}
