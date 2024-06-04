@@ -19,7 +19,7 @@ from transformers import WhisperForConditionalGeneration, WhisperProcessor
 from tqdm import tqdm
 import onnxruntime as ort
 import tempfile
-
+from fain.utils import Tit
 from tts_rater.pann import PANNModel
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -74,13 +74,19 @@ def pad_audio_batch(batch, max_len=0):
 
 def extract_se(ref_enc, waveforms, batch_size, se_save_path=None):
     gs = []
-
+    # tit = Tit()
+    
     for y in tqdm(
         batched(waveforms, batch_size), total=math.ceil(len(waveforms) / batch_size)
     ):
         y = pad_audio_batch(y)
         y = torch.stack(y)
         y = y.cuda()
+        # tit.measure(f"{y.shape=}")
+        # tit.measure(f"{hps.data.filter_length=}")
+        # tit.measure(f"{hps.data.sampling_rate=}")
+        # tit.measure(f"{hps.data.hop_length=}")
+        # tit.measure(f"{hps.data.win_length=}")
         y = spectrogram_torch(
             y,
             hps.data.filter_length,
@@ -89,9 +95,12 @@ def extract_se(ref_enc, waveforms, batch_size, se_save_path=None):
             hps.data.win_length,
             center=False,
         )
+        # tit.measure(f"{y.shape=}")
         with torch.no_grad():
             y = y.transpose(1, 2) 
+            # tit.measure(f"{y.shape=}")
             g = ref_enc(y)
+            # tit.measure(f"{g.shape=}")
             gs.append(g.detach())
     gs = torch.cat(gs)
 
@@ -237,13 +246,15 @@ def compute_mmd(a_x: torch.Tensor, b_y: torch.Tensor):
 
 
 def compute_pann_mmd_loss(audio_paths: list[str], speaker: str = "p374"):
-
+    # tit=Tit()
     n_samples = len(audio_paths)
     waveforms = [load_wav_file(fname, 32000) for fname in audio_paths]
 
     embeddings = []
     for audio in tqdm(waveforms):
         audio = torch.Tensor(audio).cuda()
+        # tit.measure(f"{audio.shape=}")
+        # tit.measure(f"{audio[None].shape=}")
         embedding = pann_model.get_embedding(audio[None])[0]
         embeddings.append(embedding)
     embeddings = torch.stack(embeddings, dim=0)

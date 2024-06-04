@@ -12,7 +12,7 @@ from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 
 from melo.commons import init_weights, get_padding
 import melo.monotonic_align as monotonic_align
-
+from fain.utils import Tit
 
 class DurationDiscriminator(nn.Module):  # vits2
     def __init__(
@@ -886,6 +886,7 @@ class SynthesizerTrn(nn.Module):
 
 
     def forward(self, x, x_lengths, y, y_lengths, sid, tone, language, bert, ja_bert):
+        # tit = Tit()
         if self.n_speakers > 0:
             g = self.emb_g(sid).unsqueeze(-1)  # [b, h, 1]
         else:
@@ -947,7 +948,9 @@ class SynthesizerTrn(nn.Module):
         # expand prior
         m_p = torch.matmul(attn.squeeze(1), m_p.transpose(1, 2)).transpose(1, 2)
         logs_p = torch.matmul(attn.squeeze(1), logs_p.transpose(1, 2)).transpose(1, 2)
-
+        # tit.measure(f"{z.shape=}")
+        # tit.measure(f"{y_lengths=}")
+        # tit.measure(f"{self.segment_size=}")
         z_slice, ids_slice = commons.rand_slice_segments(
             z, y_lengths, self.segment_size
         )

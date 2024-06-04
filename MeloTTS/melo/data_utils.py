@@ -10,6 +10,7 @@ from melo.utils import load_filepaths_and_text
 from melo.utils import load_wav_to_torch_librosa as load_wav_to_torch
 from melo.text import cleaned_text_to_sequence, get_bert
 import numpy as np
+from fain.utils import Tit
 
 """Multi speaker version"""
 
@@ -105,6 +106,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         return (phones, spec, wav, sid, tone, language, bert, ja_bert)
 
     def get_audio(self, filename):
+        # tit = Tit()
         audio_norm, sampling_rate = load_wav_to_torch(filename, self.sampling_rate)
         if sampling_rate != self.sampling_rate:
             raise ValueError(
@@ -123,6 +125,14 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             assert False
         except:
             if self.use_mel_spec_posterior:
+                # tit.measure(f"{audio_norm.shape=}")
+                # tit.measure(f"{self.filter_length=}")
+                # tit.measure(f"{self.n_mel_channels=}")
+                # tit.measure(f"{self.sampling_rate=}")
+                # tit.measure(f"{self.hop_length=}")
+                # tit.measure(f"{self.win_length=}")
+                # tit.measure(f"{self.hparams.mel_fmin=}")
+                # tit.measure(f"{self.hparams.mel_fmax=}")
                 spec = mel_spectrogram_torch(
                     audio_norm,
                     self.filter_length,
@@ -134,7 +144,13 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
                     self.hparams.mel_fmax,
                     center=False,
                 )
+                # tit.measure(f"{spec.shape=}")
             else:
+                # tit.measure(f"{audio_norm.shape=}")
+                # tit.measure(f"{self.filter_length=}")
+                # tit.measure(f"{self.sampling_rate=}")
+                # tit.measure(f"{self.hop_length=}")
+                # tit.measure(f"{self.win_length=}")
                 spec = spectrogram_torch(
                     audio_norm,
                     self.filter_length,
@@ -143,6 +159,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
                     self.win_length,
                     center=False,
                 )
+                # tit.measure(f"{spec.shape=}")
             spec = torch.squeeze(spec, 0)
             torch.save(spec, spec_filename)
         return spec, audio_norm
