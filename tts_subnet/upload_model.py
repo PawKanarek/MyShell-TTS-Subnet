@@ -86,7 +86,8 @@ async def main(config: bt.config):
     metagraph: bt.metagraph = subtensor.metagraph(config.netuid)
 
     # Make sure we're registered and have a HuggingFace token.
-    utils.assert_registered(wallet, metagraph)
+    miner_uid = utils.assert_registered(wallet, metagraph)
+    print(f"{miner_uid=}")
 
     # Get current model parameters
     parameters = ModelUpdater.get_competition_parameters(config.competition_id)
