@@ -20,7 +20,7 @@ from .download_utils import load_or_download_config, load_or_download_model
 
 class TTS(nn.Module):
     def __init__(
-        self, language, device="auto", use_hf=True, config_path=None, ckpt_path=None
+        self, language, device="auto", use_hf=True, config_path=None, ckpt_path=None, checkpoint_dict = None,
     ):
         super().__init__()
         if device == "auto":
@@ -69,9 +69,10 @@ class TTS(nn.Module):
         self.device = device
 
         # load state_dict
-        checkpoint_dict = load_or_download_model(
-            language, device, use_hf=use_hf, ckpt_path=ckpt_path
-        )
+        if checkpoint_dict is None:
+            checkpoint_dict = load_or_download_model(
+                language, device, use_hf=use_hf, ckpt_path=ckpt_path
+            )
         self.model.load_state_dict(checkpoint_dict, strict=True)
 
         language = language.split("_")[0]

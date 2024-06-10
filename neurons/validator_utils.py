@@ -125,11 +125,9 @@ def compute_wins0eps(
     win_rate = {uid: 0 for uid in uids}
     for i, uid_i in enumerate(uids):
         total_matches = 0
-        block_i = block[uid_i]
         for j, uid_j in enumerate(uids):
             if i == j:
                 continue
-            block_j = block[uid_j]
             batches_i = len(scores_per_uid[uid_i])
             batches_j = len(scores_per_uid[uid_j])
             for batch_idx in range(0, min(batches_i, batches_j)):

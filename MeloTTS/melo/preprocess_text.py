@@ -27,6 +27,7 @@ from melo.text.symbols import symbols, num_languages, num_tones
 @click.option("--val-per-spk", default=4)
 @click.option("--max-val-total", default=8)
 @click.option("--clean/--no-clean", default=True)
+@click.option("--out_config_path", default=None)
 def main(
     metadata: str,
     cleaned_path: Optional[str],
@@ -36,12 +37,14 @@ def main(
     val_per_spk: int,
     max_val_total: int,
     clean: bool,
+    out_config_path: str,
 ):
     if train_path is None:
         train_path = os.path.join(os.path.dirname(metadata), 'train.list')
     if val_path is None:
         val_path = os.path.join(os.path.dirname(metadata), 'val.list')
-    out_config_path = os.path.join(os.path.dirname(metadata), 'config.json')
+    if out_config_path is None:
+        out_config_path = os.path.join(os.path.dirname(metadata), 'config.json')
 
     if cleaned_path is None:
         cleaned_path = metadata + ".cleaned"
