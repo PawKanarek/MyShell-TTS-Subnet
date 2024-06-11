@@ -418,7 +418,7 @@ def rate_(
     
     norm_scores = []
     for ii in range(samples):
-        norm_score = np.sum([norm_dict[k][ii] for k in keys])
+        norm_score = np.prod([norm_dict[k][ii] for k in keys])
         norm_scores.append(norm_score)
 
     return norm_scores, norm_dict
