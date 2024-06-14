@@ -6,6 +6,7 @@ import json
 import subprocess
 import numpy as np
 from scipy.io.wavfile import read
+from torch.utils.tensorboard import SummaryWriter
 import torch
 import torchaudio
 import librosa
@@ -146,16 +147,19 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
         checkpoint_path,
     )
 
-
 def summarize(
-    writer,
+    writer: SummaryWriter,
     global_step,
     scalars={},
     histograms={},
     images={},
     audios={},
     audio_sampling_rate=22050,
+    wrs={},
 ):
+    if len(wrs) > 0:
+        writer.add_scalars("wr", wrs["wr"], global_step, 0)
+        writer.add_scalars("wr0eps", wrs["wr0eps"], global_step, 1)
     for k, v in scalars.items():
         writer.add_scalar(k, v, global_step)
     for k, v in histograms.items():

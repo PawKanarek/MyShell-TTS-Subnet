@@ -95,7 +95,6 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
     def get_audio_text_speaker_pair(self, audiopath_sid_text):
         # separate filename, speaker_id and text
         audiopath, sid, language, text, phones, tone, word2ph = audiopath_sid_text
-
         bert, ja_bert, phones, tone, language = self.get_text(
             text, word2ph, phones, tone, language, audiopath
         )
@@ -103,7 +102,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         spec, wav = self.get_audio(audiopath)
         sid = int(getattr(self.spk_map, sid, '0'))
         sid = torch.LongTensor([sid])
-        return (phones, spec, wav, sid, tone, language, bert, ja_bert)
+        return (phones, spec, wav, sid, tone, language, bert, ja_bert, text)
 
     def get_audio(self, filename):
         # tit = Tit()
@@ -248,6 +247,8 @@ class TextAudioSpeakerCollate:
 
         spec_padded = torch.FloatTensor(len(batch), batch[0][1].size(0), max_spec_len)
         wav_padded = torch.FloatTensor(len(batch), 1, max_wav_len)
+        label_padded = torch.LongTensor(len(batch), max_text_len)
+        
         text_padded.zero_()
         tone_padded.zero_()
         language_padded.zero_()
@@ -255,6 +256,7 @@ class TextAudioSpeakerCollate:
         wav_padded.zero_()
         bert_padded.zero_()
         ja_bert_padded.zero_()
+        label_padded.zero_()
         for i in range(len(ids_sorted_decreasing)):
             row = batch[ids_sorted_decreasing[i]]
 
@@ -283,6 +285,14 @@ class TextAudioSpeakerCollate:
 
             ja_bert = row[7]
             ja_bert_padded[i, :, : ja_bert.size(1)] = ja_bert
+            
+            label = row[8]
+            ascii_values = [ord(char) for char in label]
+            label_tensor = torch.LongTensor(ascii_values)
+            label_padded[i, : len(label_tensor)] = label_tensor
+            # label = row[8]
+            # label_padded[i, : len(label)] = label
+            
 
         return (
             text_padded,
@@ -296,6 +306,7 @@ class TextAudioSpeakerCollate:
             language_padded,
             bert_padded,
             ja_bert_padded,
+            label_padded
         )
 
 
