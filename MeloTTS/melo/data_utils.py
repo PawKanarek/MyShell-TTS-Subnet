@@ -306,7 +306,7 @@ class TextAudioSpeakerCollate:
             language_padded,
             bert_padded,
             ja_bert_padded,
-            label_padded
+            # label_padded
         )
 
 
