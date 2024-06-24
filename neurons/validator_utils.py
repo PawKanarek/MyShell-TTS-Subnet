@@ -164,11 +164,38 @@ def compute_wins0eps(
     Returns:
         tuple: A tuple containing two dictionaries, one for wins and one for win rates.
     """
+    blacklist_uids = []
+    for i, uid_i in enumerate(uids):
+        block_i = block[uid_i]
+        # if scores are all 0
+        if uid_i in blacklist_uids:
+            continue
+        if all([score == 0 for score in scores_per_uid[uid_i]]):
+            blacklist_uids.append(uid_i)
+            continue
+        for j, uid_j in enumerate(uids):
+            if i == j or uid_j in blacklist_uids:
+                continue
+            block_j = block[uid_j]
+            # check if scores are similar...
+            # if the scores are similar, we will blacklist the model with the higher block number
+            if abs(np.asarray(scores_per_uid[uid_i]) - np.asarray(scores_per_uid[uid_j])).max() < 5e-2:
+                if block_i < block_j:
+                    blacklist_uids.append(uid_j)
+                else:
+                    if block_i > block_j: # miners should use --use_hotkey_in_hash to avoid the same block clones
+                        blacklist_uids.append(uid_i)
+                        break
+    whitelist_uids = [uid for uid in uids if uid not in blacklist_uids]
+    
+    print(f"blacklisted_uids: {blacklist_uids}")
+    print(f"whitelist_uids: {whitelist_uids}")
+    
     wins = {uid: 0 for uid in uids}
     win_rate_1 = {uid: 0 for uid in uids}
-    for i, uid_i in enumerate(uids):
+    for i, uid_i in enumerate(whitelist_uids):
         total_matches = 0
-        for j, uid_j in enumerate(uids):
+        for j, uid_j in enumerate(whitelist_uids):
             if i == j:
                 continue
             batches_i = len(scores_per_uid[uid_i])
@@ -180,11 +207,11 @@ def compute_wins0eps(
                 total_matches += 1
         # Calculate win rate for uid i
         win_rate_1[uid_i] = wins[uid_i] / total_matches if total_matches > 0 else 0
-
+    wins = {uid: 0 for uid in uids}
     win_rate_4 = {uid: 0 for uid in uids}
-    for i, uid_i in enumerate(uids):
+    for i, uid_i in enumerate(whitelist_uids):
         total_matches = 0
-        for j, uid_j in enumerate(uids):
+        for j, uid_j in enumerate(whitelist_uids):
             if i == j:
                 continue
             batches_i = len(scores_per_uid[uid_i])//4
@@ -196,11 +223,11 @@ def compute_wins0eps(
                 total_matches += 1
         # Calculate win rate for uid i
         win_rate_4[uid_i] = wins[uid_i] / total_matches if total_matches > 0 else 0
-
+    wins = {uid: 0 for uid in uids}
     win_rate_8 = {uid: 0 for uid in uids}
-    for i, uid_i in enumerate(uids):
+    for i, uid_i in enumerate(whitelist_uids):
         total_matches = 0
-        for j, uid_j in enumerate(uids):
+        for j, uid_j in enumerate(whitelist_uids):
             if i == j:
                 continue
             batches_i = len(scores_per_uid[uid_i])//8
@@ -216,7 +243,11 @@ def compute_wins0eps(
                 total_matches += 1
         # Calculate win rate for uid i
         win_rate_8[uid_i] = wins[uid_i] / total_matches if total_matches > 0 else 0
-    win_rate = {uid: (win_rate_1[uid] * 0.25 + win_rate_4[uid] * 0.25 + win_rate_8[uid] * 0.5) for uid in uids}
+
+    weights = [(win_rate_1, 0.25), (win_rate_4, 0.5), (win_rate_8, 1.0)]
+    weights_sum = sum([w for _, w in weights])
+    weights = [(winrate_dict, weight / weights_sum) for winrate_dict, weight in weights]
+    win_rate = {uid: sum([win_rate_dict[uid] * weight for win_rate_dict, weight in weights]) for uid in uids}
     return wins, win_rate
     
 

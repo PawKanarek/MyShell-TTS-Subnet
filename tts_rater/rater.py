@@ -139,7 +139,10 @@ whisper_normalizer = EnglishTextNormalizer()
 
 
 def compute_wer(texts, audio_paths, batch_size, audio_pytorch_list=None):
-    waveforms = [load_wav_file(fname, 16000) for fname in audio_paths]
+    if audio_pytorch_list:
+        waveforms = audio_pytorch_list 
+    else:
+        waveforms = [load_wav_file(fname, 16000) for fname in audio_paths]
 
     total_errs = []
     total_words = []
